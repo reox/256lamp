@@ -2,7 +2,7 @@ n = 16 * 16
 
 ws2812.init(ws2812.MODE_SINGLE)
 
--- black screen
+-- white screen
 buf = ws2812.newBuffer(n, 3)
 buf:fill(23,23,23)
 ws2812.write(buf)
