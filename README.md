@@ -30,3 +30,4 @@ Connect `GPIO0` to `DIN` of the LED panel and connect the `GND` of the data cabl
 * the ESP has only 3.3V TTL, where the WS2812 uses 5V TTL... A logic level converter would probably be nice
 * More ArtNet protocol parsing. Do not rely on "we will send it correctly"... The ESP crashes if something is no bueno.
 * Fix wifi startup / LED initialization: It is probably good to initialize the LEDs as early as possible and restore the last state or something.
+* If you want to use QLC+, there might be some problems with addressing the Panels correctly... Maybe it is a good idea to address each single 8x8 panel by a single universe.
