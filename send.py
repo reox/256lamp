@@ -1,3 +1,27 @@
+#!/usr/bin/env python3
+#
+# MIT License
+#
+# Copyright (c) 2017 Sebastian Bachmann
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import socket
 import time
 from struct import pack
@@ -30,7 +54,7 @@ def rearange(buf):
     #
     # And swap every second line
     nbuf = []
-    for c, i in enumerate(range(0, 256, 16) + range(8, 256, 16)):
+    for c, i in enumerate(list(range(0, 256, 16)) + list(range(8, 256, 16))):
         line = buf[i:i + 8]
         if c % 2 == 1:
             line = line[::-1]
@@ -66,6 +90,13 @@ class ArtNet(object):
         self.controlb = controlb
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
 
+        #                    Protocol name               DMX         Version   Seq   Phy
+        self.hdr = bytearray(b'Art-Net\x00') + bytearray([0, 0x50] + [0, 14])
+
+    def _send(self, universe, buf):
+        self.sock.sendto(self.hdr + pack(">B", self.seq) + b'\x00' + pack("<H", universe) + pack(">H", len(buf)) + buf, (self.dst, self.port))
+        self.seq = (self.seq + 1) % 256
+
     def send(self, buf):
         # 170 LEDs per universe --> 510 channels
         # need to address 256 leds...
@@ -74,21 +105,15 @@ class ArtNet(object):
         if self.controlb:
             buf = bytearray(map(lambda x: x >> self.brightness, buf))
 
-        #               Protocol name                            DMX         Version   Seq   Phy
-        hdr = bytearray(['A', 'r', 't', '-', 'N', 'e', 't', 0] + [0, 0x50] + [0, 14])
-        self.sock.sendto(hdr + pack(">B", self.seq) + b'\x00' + pack("<H", 0) + pack(">H", 510) + buf[:510], (self.dst, self.port))
-        self.seq = (self.seq + 1) % 256
-        self.sock.sendto(hdr + pack(">B", self.seq) + b'\x00' + pack("<H", 1) + pack(">H", 258) + buf[510:], (self.dst, self.port))
-        self.seq = (self.seq + 1) % 256
+        self._send(0, buf[:510])
+        self._send(1, buf[510:])
 
     def sendSingle(self, r, g, b):
         """
             Sends a single RGB color for all LEDs
             using Universe 2 - which maps a single value to all LEDs
         """
-        hdr = bytearray(['A', 'r', 't', '-', 'N', 'e', 't', 0] + [0, 0x50] + [0, 14])
-        self.sock.sendto(hdr + pack(">B", self.seq) + b'\x00' + pack("<H", 2) + pack(">H", 3) + bytearray([g, r, b]), (self.dst, self.port))
-        self.seq = (self.seq + 1) % 256
+        self._send(2, bytearray([g, r, b]))
 
 
 
@@ -124,7 +149,7 @@ time.sleep(10)
 
 x = range(256)
 for i in range(256 * 256):
-    buf = map(lambda x: wheel(x), x)
+    buf = list(map(lambda x: wheel(x), x))
     buf = rearange(buf)
     art.send(buf)
     time.sleep(0.05)
