@@ -54,7 +54,7 @@ def imageToBuffer(fname):
 
 
 class ArtNet(object):
-    def __init__(self, dst="255.255.255.255", port=0x1936, brightness=8, controlb=True):
+    def __init__(self, dst="255.255.255.255", port=0x1936, brightness=6, controlb=True):
         """
             Brightness: parameter from 0 to 8. 0 ...  always off, 8 ... full brightness
             controlb: if brightness should be controlled
@@ -81,6 +81,16 @@ class ArtNet(object):
         self.sock.sendto(hdr + pack(">B", self.seq) + b'\x00' + pack("<H", 1) + pack(">H", 258) + buf[510:], (self.dst, self.port))
         self.seq = (self.seq + 1) % 256
 
+    def sendSingle(self, r, g, b):
+        """
+            Sends a single RGB color for all LEDs
+            using Universe 2 - which maps a single value to all LEDs
+        """
+        hdr = bytearray(['A', 'r', 't', '-', 'N', 'e', 't', 0] + [0, 0x50] + [0, 14])
+        self.sock.sendto(hdr + pack(">B", self.seq) + b'\x00' + pack("<H", 2) + pack(">H", 3) + bytearray([g, r, b]), (self.dst, self.port))
+        self.seq = (self.seq + 1) % 256
+
+
 
 # NOTE: Artnet supports only 512 light values per universe.
 # Therefore we should in practise use two universes and parse the header...
@@ -88,10 +98,10 @@ class ArtNet(object):
 art = ArtNet(dst="172.16.23.132")
 pos = 0
 #while True:
-#    pos += 1
-#    pos = pos % 256
-#    a.send(bytearray(map(lambda x: x >> 4, bytearray(wheel(pos) * 256))))
-#    time.sleep(0.05)
+#   pos += 1
+#   pos = pos % 256
+#   a.send(bytearray(map(lambda x: x >> 4, bytearray(wheel(pos) * 256))))
+#   time.sleep(0.05)
 
 # for f in os.listdir("foo/assets/minecraft/textures/blocks"):
 #     if f.endswith(".png"):
@@ -103,8 +113,13 @@ pos = 0
 #             time.sleep(1)
 #         except:
 #             pass
+# 
+# art.send(imageToBuffer(sys.argv[1]))
+# 
 
-art.send(imageToBuffer(sys.argv[1]))
+art.sendSingle(0x7F, 0xFF, 0x00)
+
+time.sleep(10)
 
 
 x = range(256)
@@ -112,4 +127,5 @@ for i in range(256 * 256):
     buf = map(lambda x: wheel(x), x)
     buf = rearange(buf)
     art.send(buf)
+    time.sleep(0.05)
     x = map(lambda x: (x+1) % 256, x)

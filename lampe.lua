@@ -10,11 +10,16 @@ ws2812.write(buf)
 
 s = net.createServer(net.UDP)
 s:on("receive",function(s,c)
+    -- thats interesting: we pack with LE and must unpack BE?
     universe = struct.unpack(">H", string.sub(c, 14, 16))
     if universe == 0 then
         buf:replace(string.sub(c, 19))
     elseif universe == 1 then
         buf:replace(string.sub(c, 19), 171)
+    elseif universe == 2 then
+        -- "fake" zone, where we take only three lamps and replicate for all leds
+        g,r,b = struct.unpack("BBB", string.sub(c, 19, 21))
+        buf:fill(g,r,b)
     end
 
     ws2812.write(buf)
