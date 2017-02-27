@@ -124,7 +124,7 @@ if __name__ == "__main__":
     # NOTE: Artnet supports only 512 light values per universe.
     # Therefore we should in practise use two universes and parse the header...
 
-    art = ArtNet(dst="172.16.23.132")
+    art = ArtNet(dst="172.16.23.132", controlb=False)
     pos = 0
     #while True:
     #   pos += 1
@@ -150,7 +150,7 @@ if __name__ == "__main__":
 
     time.sleep(10)
 
-    for i in range(1700, 25000, 10):
+    for i in range(4000, 6000, 100):
         print("Sending {}: {}".format(i, colortemp(i)))
         art.sendSingle(*colortemp(i))
         time.sleep(0.05)

@@ -20,7 +20,7 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
-n = 8 * 8
+n = 16 * 16
 
 ws2812.init(ws2812.MODE_SINGLE)
 
@@ -58,9 +58,6 @@ s:on("receive",function(s,c)
         elseif universe == 2 then
             -- "fake" zone, where we take only three lamps and replicate for all leds
             b, g, r = struct.unpack("BBB", string.sub(c, 19, 21))
-            print(r)
-            print(g)
-            print(b)
             buf:fill(b, g, r)
         end
 
