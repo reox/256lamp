@@ -29,6 +29,7 @@ from PIL import Image
 import os
 from itertools import chain
 import sys
+from colortemp import colortemp
 
 
 def wheel(pos):
@@ -67,9 +68,9 @@ def imageToBuffer(fname):
     im = Image.open(fname)
     pix = list(im.getdata())
     if len(pix[0]) == 4:
-        pix = [(g,r,b) for r,g,b,a in pix]
+        pix = [(b,g,r) for r,g,b,a in pix]
     else:
-        pix = [(g,r,b) for r,g,b in pix]
+        pix = [(b,g,r) for r,g,b in pix]
 
     if len(pix) != 256:
         return bytearray([0] * 768)
@@ -112,45 +113,55 @@ class ArtNet(object):
         """
             Sends a single RGB color for all LEDs
             using Universe 2 - which maps a single value to all LEDs
+
+            WS2812 are BGR
         """
-        self._send(2, bytearray([g, r, b]))
+        self._send(2, bytearray([b, g, r]))
 
 
 
-# NOTE: Artnet supports only 512 light values per universe.
-# Therefore we should in practise use two universes and parse the header...
+if __name__ == "__main__":
+    # NOTE: Artnet supports only 512 light values per universe.
+    # Therefore we should in practise use two universes and parse the header...
 
-art = ArtNet(dst="172.16.23.132")
-pos = 0
-#while True:
-#   pos += 1
-#   pos = pos % 256
-#   a.send(bytearray(map(lambda x: x >> 4, bytearray(wheel(pos) * 256))))
-#   time.sleep(0.05)
+    art = ArtNet(dst="172.16.23.132")
+    pos = 0
+    #while True:
+    #   pos += 1
+    #   pos = pos % 256
+    #   a.send(bytearray(map(lambda x: x >> 4, bytearray(wheel(pos) * 256))))
+    #   time.sleep(0.05)
 
-# for f in os.listdir("foo/assets/minecraft/textures/blocks"):
-#     if f.endswith(".png"):
-#         try:
-#             fname = os.path.join("foo/assets/minecraft/textures/blocks", f)
-#             buf = imageToBuffer(fname)
-# 
-#             art.send(buf)
-#             time.sleep(1)
-#         except:
-#             pass
-# 
-# art.send(imageToBuffer(sys.argv[1]))
-# 
+    # for f in os.listdir("foo/assets/minecraft/textures/blocks"):
+    #     if f.endswith(".png"):
+    #         try:
+    #             fname = os.path.join("foo/assets/minecraft/textures/blocks", f)
+    #             buf = imageToBuffer(fname)
+    # 
+    #             art.send(buf)
+    #             time.sleep(1)
+    #         except:
+    #             pass
+    # 
+    # art.send(imageToBuffer(sys.argv[1]))
+    # 
 
-art.sendSingle(0x7F, 0xFF, 0x00)
+    art.sendSingle(0x7F, 0xFF, 0x00)
 
-time.sleep(10)
+    time.sleep(10)
+
+    for i in range(1700, 25000, 10):
+        print("Sending {}: {}".format(i, colortemp(i)))
+        art.sendSingle(*colortemp(i))
+        time.sleep(0.05)
+
+    time.sleep(10)
 
 
-x = range(256)
-for i in range(256 * 256):
-    buf = list(map(lambda x: wheel(x), x))
-    buf = rearange(buf)
-    art.send(buf)
-    time.sleep(0.05)
-    x = map(lambda x: (x+1) % 256, x)
+    x = range(256)
+    for i in range(256 * 256):
+        buf = list(map(lambda x: wheel(x), x))
+        buf = rearange(buf)
+        art.send(buf)
+        time.sleep(0.05)
+        x = map(lambda x: (x+1) % 256, x)

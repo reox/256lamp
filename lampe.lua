@@ -20,31 +20,48 @@
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
 
-n = 16 * 16
+n = 8 * 8
 
 ws2812.init(ws2812.MODE_SINGLE)
 
 -- white screen
 buf = ws2812.newBuffer(n, 3)
+buf:fill(0,0,0)
+ws2812.write(buf)
+-- should be blue
+buf:fill(255,0,0)
+ws2812.write(buf)
+
+-- should be green
+buf:fill(0,255,0)
+ws2812.write(buf)
+
+-- should be red
+buf:fill(0,0,255)
+ws2812.write(buf)
+
+-- should be white
 buf:fill(23,23,23)
 ws2812.write(buf)
 
-
 s = net.createServer(net.UDP)
 s:on("receive",function(s,c)
+    -- in lua: sub(c, start, end) counts from 1 and includes char at end!
     -- check for actual Art-Net\0 string:
     if string.sub(c, 1, 7) == "Art-Net" then
-        -- thats interesting: we pack with LE and must unpack BE?
-        universe = struct.unpack(">H", string.sub(c, 14, 16))
-        -- length = struct.unpack("<H", string.sub(c, 16, 18))
+        universe = struct.unpack("<H", string.sub(c, 15, 16))
+        -- length = struct.unpack(">H", string.sub(c, 17, 18))
         if universe == 0 then
             buf:replace(string.sub(c, 19))
         elseif universe == 1 then
             buf:replace(string.sub(c, 19), 171)
         elseif universe == 2 then
             -- "fake" zone, where we take only three lamps and replicate for all leds
-            g,r,b = struct.unpack("BBB", string.sub(c, 19, 21))
-            buf:fill(g,r,b)
+            b, g, r = struct.unpack("BBB", string.sub(c, 19, 21))
+            print(r)
+            print(g)
+            print(b)
+            buf:fill(b, g, r)
         end
 
         ws2812.write(buf)
