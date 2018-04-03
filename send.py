@@ -132,25 +132,25 @@ if __name__ == "__main__":
     #   a.send(bytearray(map(lambda x: x >> 4, bytearray(wheel(pos) * 256))))
     #   time.sleep(0.05)
 
-    # for f in os.listdir("foo/assets/minecraft/textures/blocks"):
-    #     if f.endswith(".png"):
-    #         try:
-    #             fname = os.path.join("foo/assets/minecraft/textures/blocks", f)
-    #             buf = imageToBuffer(fname)
-    # 
-    #             art.send(buf)
-    #             time.sleep(1)
-    #         except:
-    #             pass
-    # 
-    # art.send(imageToBuffer(sys.argv[1]))
-    # 
+    for f in os.listdir("foo/assets/minecraft/textures/blocks"):
+        if f.endswith(".png"):
+            try:
+                fname = os.path.join("foo/assets/minecraft/textures/blocks", f)
+                buf = imageToBuffer(fname)
+    
+                art.send(buf)
+                time.sleep(1)
+            except:
+                pass
+    
+    art.send(imageToBuffer(sys.argv[1]))
+    
 
     art.sendSingle(0x7F, 0xFF, 0x00)
 
     time.sleep(10)
 
-    for i in range(4000, 6000, 100):
+    for i in range(2000, 10000, 100):
         print("Sending {}: {}".format(i, colortemp(i)))
         art.sendSingle(*colortemp(i))
         time.sleep(0.05)
